@@ -1,0 +1,27 @@
+# 数回游戏平台定时任务配置
+# 根据PRD要求，每天UTC 00:00更新每日挑战
+
+# 每日维护任务 - 每天凌晨2点执行
+# 包括：检查题库存量、生成新题目、预生成每日挑战等
+0 2 * * * cd /path/to/slitherlink-backend && npm run maintenance 2>&1 | tee -a /path/to/logs/maintenance.log
+
+# 题库库存检查 - 每6小时检查一次
+0 */6 * * * cd /path/to/slitherlink-backend && npx ts-node src/scripts/daily-maintenance.ts 2>&1 | tee -a /path/to/logs/stock-check.log
+
+# 每周去重检查 - 每周日凌晨3点执行
+0 3 * * 0 cd /path/to/slitherlink-backend && npx ts-node src/scripts/deduplication-check.ts check 2>&1 | tee -a /path/to/logs/deduplication.log
+
+# 数据库备份 - 每天凌晨4点执行
+0 4 * * * pg_dump slitherlink > /path/to/backups/slitherlink_$(date +\%Y\%m\%d).sql
+
+# 日志清理 - 每周清理7天以前的日志
+0 5 * * 0 find /path/to/logs -name "*.log" -mtime +7 -delete
+
+# 使用说明：
+# 1. 将此文件中的 /path/to 替换为实际路径
+# 2. 确保Node.js和PostgreSQL在系统PATH中可用
+# 3. 运行 crontab -e 编辑crontab，复制相关行
+# 4. 或者运行：crontab /path/to/this/file
+
+# 示例安装命令（替换实际路径后执行）：
+# sed 's|/path/to|'$(pwd)'|g' crontab-config.txt | crontab -
