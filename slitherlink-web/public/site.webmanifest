@@ -1,0 +1,64 @@
+{
+  "name": "Slitherlinks - Slitherlink Puzzle Platform",
+  "short_name": "Slitherlinks",
+  "description": "The ultimate online platform for Slitherlink puzzle enthusiasts with daily challenges, global leaderboards, and competitive gameplay.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games", "education", "entertainment"],
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-64x64.png",
+      "sizes": "64x64", 
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Daily Challenge",
+      "short_name": "Daily",
+      "description": "Play today's daily Slitherlink challenge",
+      "url": "/?daily=true",
+      "icons": [
+        {
+          "src": "/favicon-64x64.png",
+          "sizes": "64x64",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Leaderboards",
+      "short_name": "Rankings", 
+      "description": "View global leaderboards and rankings",
+      "url": "/?view=leaderboard",
+      "icons": [
+        {
+          "src": "/favicon-64x64.png",
+          "sizes": "64x64",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
