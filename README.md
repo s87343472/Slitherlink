@@ -186,6 +186,10 @@ Slitherlink/
 │
 ├── 📝 docs/                     # Documentation
 ├── 📊 logs/                     # Service Logs
+├── 🔧 scripts/                  # Management Scripts
+│   ├── puzzle-manager.sh        # Unified Puzzle Management
+│   ├── test-complete-platform.sh # Platform Testing
+│   └── ... (other utility scripts)
 ├── 🚀 start-project.sh          # Professional Startup Script
 ├── 🛑 stop-project.sh           # Professional Shutdown Script
 └── 📖 README.md                 # This Documentation
@@ -338,6 +342,90 @@ Slitherlink/
 - **Database Indexing**: Optimized query performance
 - **Comprehensive Logging**: Structured logging for monitoring
 
+## 🧩 题目管理系统
+
+### 统一题目管理脚本 - `puzzle-manager.sh`
+
+集成了所有题目生成、导入、修复和清理功能的统一管理脚本。
+
+#### 🚀 快速开始
+
+```bash
+# 查看帮助
+./scripts/puzzle-manager.sh help
+
+# 查看题目库存状态
+./scripts/puzzle-manager.sh status
+
+# 补充每日挑战题目库
+./scripts/puzzle-manager.sh daily
+
+# 补充Custom Puzzle题目库
+./scripts/puzzle-manager.sh custom
+
+# 修复损坏的文件
+./scripts/puzzle-manager.sh fix
+
+# 清理临时文件
+./scripts/puzzle-manager.sh clean
+```
+
+#### 📋 命令说明
+
+| 命令 | 功能 | 示例 |
+|------|------|------|
+| `status` | 查看题目库存状态 | `./scripts/puzzle-manager.sh status` |
+| `daily` | 补充每日挑战题目 | `./scripts/puzzle-manager.sh daily --count 50` |
+| `custom` | 补充Custom Puzzle题目 | `./scripts/puzzle-manager.sh custom --size 7 --count 30` |
+| `fix` | 修复损坏的JSON文件 | `./scripts/puzzle-manager.sh fix` |
+| `clean` | 清理临时文件和目录 | `./scripts/puzzle-manager.sh clean` |
+
+#### ⚙️ 选项参数
+
+| 选项 | 说明 | 示例 |
+|------|------|------|
+| `--count N` | 指定生成数量 | `--count 50` |
+| `--size N` | 指定网格尺寸 (5,7,10,12,15) | `--size 7` |
+| `--diff LEVEL` | 指定难度 (easy,medium,difficult) | `--diff medium` |
+| `--keep` | 保留临时文件（调试用） | `--keep` |
+
+#### 📊 库存管理建议
+
+**库存状态指示：**
+- 🟢 **Good (25+)**：库存充足，无需补充
+- 🟡 **Medium (10-24)**：建议适量补充
+- 🔴 **Low (<10)**：需要紧急补充
+
+**补充策略：**
+1. **定期检查**：每周运行 `./scripts/puzzle-manager.sh status` 查看库存
+2. **按需补充**：根据状态颜色决定补充数量
+3. **重点关注**：大尺寸题目（12x12, 15x15）生成较慢，需提前准备
+
+#### 📈 性能参考
+
+不同尺寸题目的生成时间参考：
+- 5x5: ~1秒/题
+- 7x7: ~2-3秒/题  
+- 10x10: ~5-10秒/题
+- 12x12: ~15-30秒/题
+- 15x15: ~30-60秒/题
+
+#### 🔧 故障排除
+
+**算法服务未启动**
+```bash
+# 错误信息：Algorithm service not available
+# 解决方案：
+cd SlitherLink-analysis
+java -jar target/puzzle-0.0.1-SNAPSHOT.jar server config.yml
+```
+
+**依赖缺失**
+```bash
+# 安装必需依赖
+brew install jq curl bc
+```
+
 ## 🚨 故障排除
 
 ### 常见问题
@@ -366,7 +454,7 @@ Slitherlink/
 
 4. **题目生成失败**
    - 检查数据库中是否有题目库存 
-   - 运行 `./batch-generate-puzzles.sh` 生成题目
+   - 使用统一管理脚本生成题目: `./scripts/puzzle-manager.sh status`
    - 查看后端日志排查具体错误
    - 算法服务独立运行，不影响网站正常使用
 
@@ -457,7 +545,7 @@ npm test             # Unit tests (when implemented)
 
 ### Platform Testing
 ```bash
-./test-complete-platform.sh  # End-to-end platform testing
+./scripts/test-complete-platform.sh  # End-to-end platform testing
 ```
 
 ## 📄 License & Legal
