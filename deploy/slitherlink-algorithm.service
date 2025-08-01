@@ -1,0 +1,54 @@
+# Systemd服务文件 - Slitherlink算法服务
+# 文件路径: /etc/systemd/system/slitherlink-algorithm.service
+
+[Unit]
+Description=Slitherlink Algorithm Service
+Documentation=https://github.com/your-username/slitherlink
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=slitherlink
+Group=slitherlink
+WorkingDirectory=/path/to/slitherlink/SlitherLink-analysis
+
+# 环境变量配置
+Environment=ALGORITHM_PORT=8082
+Environment=LOG_LEVEL=INFO
+Environment=LOG_DIR=/var/log/slitherlink
+Environment=JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+# 启动命令
+ExecStart=/usr/bin/java $JAVA_OPTS -jar target/SlitherLink-analysis-1.0-SNAPSHOT.jar server config.yml
+
+# 停止和重启配置
+ExecStop=/bin/kill -TERM $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# 重启策略
+Restart=always
+RestartSec=10
+StartLimitInterval=60s
+StartLimitBurst=3
+
+# 资源限制
+LimitNOFILE=65536
+LimitNPROC=32768
+
+# 安全配置
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/slitherlink
+ReadWritePaths=/tmp
+
+# 日志配置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=slitherlink-algorithm
+
+[Install]
+WantedBy=multi-user.target

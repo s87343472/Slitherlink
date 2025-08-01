@@ -458,36 +458,126 @@ brew install jq curl bc
    - 查看后端日志排查具体错误
    - 算法服务独立运行，不影响网站正常使用
 
-## 🌐 Production Deployment
+## 🌐 生产部署指南
 
-### Domain Configuration
-- **Production Domain**: slitherlinks.com
-- **SSL/HTTPS**: Required for production deployment
-- **CDN Integration**: Optimized static asset delivery
+### 域名与架构
+- **生产域名**: slitherlinks.com
+- **SSL/HTTPS**: 生产环境必需
+- **多服务架构**: 前端(3002) + 后端(8002) + 算法服务(8082)
 
-### Environment Variables
+### 服务端口配置
 ```bash
-# Backend (.env)
-DATABASE_URL=postgresql://user:password@localhost:5432/slitherlink
-JWT_SECRET=your-super-secret-jwt-key
-NODE_ENV=production
-
-# Frontend (.env.local)  
-NEXT_PUBLIC_API_URL=https://api.slitherlinks.com
-NEXT_PUBLIC_SITE_URL=https://slitherlinks.com
+# 生产环境端口分配（避免与其他项目冲突）
+前端服务: 3002
+后端API: 8002  
+算法服务: 8082
 ```
 
-### Build & Compilation
+### 快速部署
 ```bash
-# Frontend Production Build
-cd slitherlink-web && npm run build ✅
+# 1. 创建部署目录
+mkdir -p /var/www/slitherlink
+cd /var/www/slitherlink
 
-# Backend TypeScript Compilation  
-cd slitherlink-backend && npm run build ✅
+# 2. 克隆项目
+git clone <your-repo-url> .
 
-# Algorithm Service Build
+# 3. 配置环境变量
+cp deploy/.env.production .env
+# 编辑.env文件，设置数据库密码、JWT密钥等
+
+# 4. 运行部署脚本
+sudo ./deploy/ssl-setup.sh          # 设置SSL证书
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/slitherlinks.com
+sudo ln -s /etc/nginx/sites-available/slitherlinks.com /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# 5. 启动服务
+pm2 start deploy/pm2.ecosystem.config.js --env production
+sudo cp deploy/slitherlink-algorithm.service /etc/systemd/system/
+sudo systemctl enable slitherlink-algorithm && sudo systemctl start slitherlink-algorithm
+```
+
+### 部署配置文件
+所有部署配置文件位于 `deploy/` 目录：
+
+| 文件 | 用途 | 说明 |
+|------|------|------|
+| `.env.production` | 环境变量模板 | 配置数据库、端口、域名等 |
+| `nginx.conf` | Nginx配置 | 反向代理、SSL、静态资源 |
+| `pm2.ecosystem.config.js` | PM2进程管理 | Node.js服务集群管理 |
+| `slitherlink-algorithm.service` | Systemd服务 | Java算法服务管理 |
+| `database-setup.sql` | 数据库初始化 | 创建用户和数据库 |
+| `ssl-setup.sh` | SSL证书脚本 | 自动申请Let's Encrypt证书 |
+| `backup-script.sh` | 数据库备份 | 自动化数据库备份 |
+
+### 环境变量配置
+复制并编辑 `deploy/.env.production`：
+```bash
+# 关键配置项（必须修改）
+DB_PASSWORD=your_secure_password_here
+JWT_SECRET=your_super_secure_jwt_secret_key
+DOMAIN=slitherlinks.com
+
+# 端口配置
+PORT=3002
+BACKEND_PORT=8002
+ALGORITHM_PORT=8082
+
+# 数据库配置
+DB_NAME=slitherlink_prod
+DB_USER=slitherlink_user
+```
+
+### 构建与编译
+```bash
+# 前端生产构建
+cd slitherlink-web && npm ci && npm run build ✅
+
+# 后端编译
+cd slitherlink-backend && npm ci && npm run build ✅
+
+# 算法服务构建
 cd SlitherLink-analysis && mvn clean package ✅
 ```
+
+### 服务管理
+```bash
+# PM2服务管理
+pm2 status                    # 查看服务状态
+pm2 logs                      # 查看日志
+pm2 restart all               # 重启所有服务
+pm2 reload all                # 零停机重载
+
+# 算法服务管理  
+sudo systemctl status slitherlink-algorithm
+sudo systemctl restart slitherlink-algorithm
+sudo journalctl -u slitherlink-algorithm -f
+
+# Nginx管理
+sudo nginx -t                 # 测试配置
+sudo systemctl reload nginx   # 重载配置
+```
+
+### 监控与维护
+```bash
+# 健康检查
+curl https://slitherlinks.com/health
+
+# 数据库备份（自动化）
+./deploy/backup-script.sh
+
+# 查看服务日志
+tail -f /var/log/slitherlink/*.log
+```
+
+### 运维文档
+完整的运维部署文档请参考 `docs/DEPLOYMENT.md`，包含：
+- 详细的部署步骤
+- 故障排除指南  
+- 性能监控配置
+- 安全配置最佳实践
+- 备份与恢复流程
 
 ## 📋 Development Status
 
