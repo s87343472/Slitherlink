@@ -33,13 +33,27 @@ export default function Home() {
     initialize();
   }, [initialize]);
 
-  // Calculate mobile game size - make it larger for better gameplay
+  // Calculate mobile game size - optimized for all grid sizes
   useEffect(() => {
     const updateMobileSize = () => {
       if (typeof window !== 'undefined') {
-        // Use much more of the available width for maximum game area
-        const maxSize = Math.min(window.innerWidth - 10, 500); // Increased to 500 and reduced margin to 10
-        setMobileGameSize(maxSize);
+        // Calculate based on screen width with proper padding
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        
+        // Reserve space for UI elements (header, stats, controls)
+        const reservedHeight = 280; // Approximate height of non-game elements
+        const availableHeight = screenHeight - reservedHeight;
+        
+        // Use 90% of available width and height, whichever is smaller
+        const maxWidthSize = Math.floor(screenWidth * 0.9);
+        const maxHeightSize = Math.floor(availableHeight * 0.9);
+        
+        // Ensure minimum size for playability and maximum for large screens
+        const calculatedSize = Math.min(maxWidthSize, maxHeightSize);
+        const finalSize = Math.max(280, Math.min(calculatedSize, 450));
+        
+        setMobileGameSize(finalSize);
       }
     };
 
@@ -175,38 +189,64 @@ export default function Home() {
         {/* Mobile-first layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-4 gap-1 sm:gap-4 lg:gap-8">
           
-          {/* Mobile Game Area (Priority layout - full width on mobile) */}
+          {/* Mobile Game Area - Redesigned for better UX */}
           <div className="lg:hidden order-1">
             {currentPuzzle && (
               <GameErrorBoundary>
-                <div className="space-y-1">
-                  {/* Ultra-compact Game Stats for Mobile - minimal height */}
-                  <div className="px-1">
-                    <div className="bg-white rounded shadow-sm border p-1">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-mono">{displayTime}</span>
-                        <span>🏆{score.toLocaleString()}</span>
-                        <span>❌{errors}</span>
-                        <span className={`px-1 rounded text-xs capitalize ${getDifficultyColor(currentPuzzle.difficulty)}`}>
+                <div className="bg-white rounded-lg shadow-sm border mx-2 my-2 overflow-hidden">
+                  {/* Mobile Game Header - Clean and informative */}
+                  <div className="px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${gameStatus === 'playing' ? 'bg-green-500 animate-pulse' : gameStatus === 'completed' ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+                        <span className="text-sm font-bold text-gray-800">
+                          {currentPuzzle.gridSize}×{currentPuzzle.gridSize}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${getDifficultyColor(currentPuzzle.difficulty)}`}>
                           {currentPuzzle.difficulty}
                         </span>
+                      </div>
+                      <div className="text-xs font-mono text-gray-600 bg-white px-2 py-1 rounded-md border">
+                        {displayTime}
                       </div>
                     </div>
                   </div>
                   
-                  {/* Game Board - Maximize mobile width */}
-                  <div className="flex justify-center">
-                    <PhaserGameBoard 
-                      width={mobileGameSize} 
-                      height={mobileGameSize}
-                      className="w-full"
-                      isMobile={true}
-                    />
+                  {/* Mobile Game Stats - Elegant row */}
+                  <div className="px-3 py-2 bg-white">
+                    <div className="flex justify-center gap-6">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-purple-600">{score.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Score</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-red-600">{errors}</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Errors</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600 font-mono">{displayTime}</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Time</div>
+                      </div>
+                    </div>
                   </div>
                   
-                  {/* Minimal Controls - icons only */}
-                  <div className="px-1">
-                    <div className="flex justify-center gap-1">
+                  {/* Game Board - Properly centered and spaced */}
+                  <div className="p-3 bg-gray-50">
+                    <div className="flex justify-center">
+                      <div className="bg-white rounded-lg border-2 border-gray-200 shadow-sm overflow-hidden">
+                        <PhaserGameBoard 
+                          width={mobileGameSize} 
+                          height={mobileGameSize}
+                          className="block"
+                          isMobile={true}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mobile Controls - Better spacing and design */}
+                  <div className="px-3 py-3 bg-white border-t border-slate-100">
+                    <div className="flex justify-center gap-2">
                       <button
                         onClick={() => {
                           if (gameStatus === 'playing') {
@@ -217,9 +257,9 @@ export default function Home() {
                             if (game) game.resumeGame();
                           }
                         }}
-                        className="w-6 h-6 rounded text-xs bg-yellow-500 text-white flex items-center justify-center"
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-500 text-white shadow-md hover:bg-yellow-600 active:scale-95 transition-all"
                       >
-                        {gameStatus === 'playing' ? '⏸' : '▶'}
+                        <span className="text-sm">{gameStatus === 'playing' ? '⏸️' : '▶️'}</span>
                       </button>
                       
                       <button
@@ -227,9 +267,9 @@ export default function Home() {
                           const game = (window as any).slitherlinkGame;
                           if (game) game.resetPuzzle();
                         }}
-                        className="w-6 h-6 rounded text-xs bg-red-500 text-white flex items-center justify-center"
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500 text-white shadow-md hover:bg-red-600 active:scale-95 transition-all"
                       >
-                        🔄
+                        <span className="text-sm">🔄</span>
                       </button>
                       
                       <button
@@ -237,9 +277,9 @@ export default function Home() {
                           const { undoMove } = useGameStore.getState();
                           undoMove();
                         }}
-                        className="w-6 h-6 rounded text-xs bg-blue-500 text-white flex items-center justify-center"
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 active:scale-95 transition-all"
                       >
-                        ↶
+                        <span className="text-sm">↶</span>
                       </button>
                       
                       <button
@@ -247,32 +287,47 @@ export default function Home() {
                           const { redoMove } = useGameStore.getState();
                           redoMove();
                         }}
-                        className="w-6 h-6 rounded text-xs bg-blue-500 text-white flex items-center justify-center"
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 active:scale-95 transition-all"
                       >
-                        ↷
+                        <span className="text-sm">↷</span>
                       </button>
+                    </div>
+                    
+                    {/* Quick action hint */}
+                    <div className="mt-2 text-center">
+                      <p className="text-xs text-gray-500">
+                        Tap between dots to draw • Long press to block
+                      </p>
                     </div>
                   </div>
                 </div>
               </GameErrorBoundary>
             )}
             {!currentPuzzle && isAutoLoading && (
-              <div className="flex justify-center py-4">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                  <p className="text-sm text-gray-600">Loading puzzle...</p>
+              <div className="flex justify-center py-8 mx-2">
+                <div className="text-center bg-white rounded-lg shadow-sm border p-6">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-base text-gray-700 font-medium">Loading puzzle...</p>
+                  <p className="text-sm text-gray-500 mt-1">Preparing your game</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Mobile: Compact Puzzle Selection at bottom */}
-          <div className="lg:hidden order-3">
-            <details className="bg-white rounded-lg shadow-sm border">
-              <summary className="p-2 cursor-pointer text-sm font-medium text-gray-900 hover:bg-gray-50 text-center">
-                🎯 More Puzzles
+          {/* Mobile: Better Puzzle Selection */}
+          <div className="lg:hidden order-3 mx-2">
+            <details className="bg-white rounded-lg shadow-sm border overflow-hidden">
+              <summary className="p-4 cursor-pointer text-center bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-colors">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">🎯</span>
+                  </div>
+                  <span className="font-bold text-gray-800">More Puzzles</span>
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin opacity-0 details-marker:opacity-100"></div>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Tap to see puzzle options</p>
               </summary>
-              <div className="p-2 border-t border-gray-200">
+              <div className="border-t border-gray-100">
                 <PuzzleSelector />
               </div>
             </details>
@@ -326,46 +381,96 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mobile: Minimal help and features at very bottom */}
-          <div className="lg:hidden order-4">
-            <div className="space-y-1">
-              {/* Minimal help - only when really needed */}
-              <details className="bg-white rounded-lg shadow-sm border">
-                <summary className="p-2 cursor-pointer text-sm font-medium text-gray-900 hover:bg-gray-50 text-center">
-                  ❓ Quick Help
+          {/* Mobile: Clean bottom sections */}
+          <div className="lg:hidden order-4 mx-2 mb-4 space-y-3">
+            {/* Quick Help - Better design */}
+            <details className="bg-white rounded-lg shadow-sm border overflow-hidden">
+              <summary className="p-3 cursor-pointer bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 transition-colors">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">?</span>
+                  </div>
+                  <span className="font-bold text-gray-800">Quick Help</span>
+                </div>
+              </summary>
+              <div className="p-4 border-t border-gray-100 bg-amber-50/30">
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <p className="font-bold text-gray-800 text-sm">Goal</p>
+                    <p className="text-xs text-gray-600 mt-1">Draw one continuous loop connecting the dots</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="font-semibold text-blue-600">Tap</p>
+                      <p className="text-gray-600">Draw lines</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="font-semibold text-red-600">Long press</p>
+                      <p className="text-gray-600">Block edges</p>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-600">
+                      <span className="font-semibold">Numbers</span> show how many lines should surround that cell
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            {/* Account/Completion section - More elegant */}
+            {(!isAuthenticated || gameStatus === 'completed') && (
+              <details className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <summary className="p-3 cursor-pointer bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-colors">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">
+                        {!isAuthenticated ? '👤' : '🎉'}
+                      </span>
+                    </div>
+                    <span className="font-bold text-gray-800">
+                      {!isAuthenticated ? 'Join Community' : 'Well Done!'}
+                    </span>
+                  </div>
                 </summary>
-                <div className="p-2 border-t border-gray-200 text-xs text-gray-700">
-                  <strong>Goal:</strong> Draw one continuous loop. Numbers show how many lines surround that cell.
+                <div className="p-4 border-t border-gray-100">
+                  {!isAuthenticated && (
+                    <div className="text-center space-y-3">
+                      <p className="text-sm text-gray-700">
+                        Create an account to save your progress and compete on leaderboards!
+                      </p>
+                      <button
+                        onClick={() => setShowRegisterModal(true)}
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-semibold shadow-md"
+                      >
+                        Create Free Account
+                      </button>
+                      <button
+                        onClick={() => setShowLoginModal(true)}
+                        className="w-full text-blue-600 text-sm py-2 px-4 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                      >
+                        Already have an account? Sign In
+                      </button>
+                    </div>
+                  )}
+                  
+                  {gameStatus === 'completed' && (
+                    <div className="text-center space-y-2">
+                      <div className="text-2xl">🎉</div>
+                      <p className="font-bold text-green-800">Congratulations!</p>
+                      <p className="text-sm text-gray-600">
+                        You completed the puzzle in {displayTime} with {errors} errors.
+                      </p>
+                      {!isAuthenticated && (
+                        <p className="text-xs text-blue-600 mt-2">
+                          Sign up to save your score!
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </details>
-
-              {/* Account features - compact */}
-              {(!isAuthenticated || gameStatus === 'completed') && (
-                <details className="bg-white rounded-lg shadow-sm border">
-                  <summary className="p-2 cursor-pointer text-sm font-medium text-gray-900 hover:bg-gray-50 text-center">
-                    {!isAuthenticated ? '🎯 Join' : '🎉 Done!'}
-                  </summary>
-                  <div className="p-2 border-t border-gray-200">
-                    {!isAuthenticated && (
-                      <div className="text-xs text-center">
-                        <button
-                          onClick={() => setShowRegisterModal(true)}
-                          className="w-full bg-blue-600 text-white text-xs py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                        >
-                          Create Account
-                        </button>
-                      </div>
-                    )}
-                    
-                    {gameStatus === 'completed' && (
-                      <div className="text-xs text-center text-green-800">
-                        <strong>Congratulations!</strong>
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Right Sidebar - Desktop only */}

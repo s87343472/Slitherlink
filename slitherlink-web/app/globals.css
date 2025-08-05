@@ -24,3 +24,71 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Mobile game optimizations */
+@media (max-width: 1024px) {
+  /* Ensure game canvas is always centered */
+  .phaser-game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: fit-content;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent zoom on input focus for iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Better touch targets */
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Details/summary improvements */
+  details > summary {
+    list-style: none;
+    outline: none;
+  }
+  
+  details > summary::-webkit-details-marker {
+    display: none;
+  }
+  
+  details[open] > summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+/* Game board specific optimizations */
+.game-board-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ensure Phaser canvas is responsive but maintains aspect ratio */
+canvas {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Better focus states for accessibility */
+button:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 8px;
+}

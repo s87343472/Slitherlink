@@ -20,6 +20,12 @@ export class SlitherlinkGame extends Phaser.Scene {
   private isShowingSolution: boolean = false;
   private solutionLines: Phaser.GameObjects.Graphics[] = [];
   
+  // Touch/click state for long press detection
+  private longPressTimer: Phaser.Time.TimerEvent | null = null;
+  private isLongPress: boolean = false;
+  private pointerDownTime: number = 0;
+  private pointerDownPosition: { x: number, y: number } = { x: 0, y: 0 };
+  
   // Colors
   private colors = {
     background: 0xf8fafc,
@@ -46,9 +52,29 @@ export class SlitherlinkGame extends Phaser.Scene {
     // Set background color
     this.cameras.main.setBackgroundColor(this.colors.background);
     
-    // Enable input
+    // Configure input for better mobile support
+    this.input.setPollAlways();
+    this.input.mouse.disableContextMenu();
+    
+    // Enable input events
     this.input.on('pointerdown', this.handlePointerDown, this);
     this.input.on('pointerup', this.handlePointerUp, this);
+    
+    // Add additional mobile-friendly events
+    this.input.on('pointermove', this.handlePointerMove, this);
+    
+    // Set up touch-specific configurations
+    if (this.input.touch) {
+      this.input.touch.capture = true;
+    }
+    
+    // Add debug information for development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Phaser Scene created with input system ready');
+      console.log('Scale manager mode:', this.scale.scaleMode);
+      console.log('Game size:', this.game.config.width, 'x', this.game.config.height);
+      console.log('Canvas size:', this.game.canvas.width, 'x', this.game.canvas.height);
+    }
   }
 
   public loadPuzzle(puzzle: PuzzleData) {
@@ -149,31 +175,101 @@ export class SlitherlinkGame extends Phaser.Scene {
   private handlePointerDown(pointer: Phaser.Input.Pointer) {
     if (!this.puzzle) return;
 
-    const { x, y } = pointer;
+    // Store pointer down information for long press detection
+    this.pointerDownTime = this.time.now;
+    this.pointerDownPosition = { x: pointer.x, y: pointer.y };
+    this.isLongPress = false;
+    
+    // Cancel any existing long press timer
+    if (this.longPressTimer) {
+      this.longPressTimer.destroy();
+    }
+    
+    // Get transformed coordinates for better touch accuracy
+    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const x = worldPoint.x;
+    const y = worldPoint.y;
+    
+    // Debug logging for mobile testing
+    console.log(`Touch at screen: (${pointer.x}, ${pointer.y}), world: (${x}, ${y}), offset: (${this.offsetX}, ${this.offsetY}), cellSize: ${this.cellSize}`);
+    
     const edgeInfo = this.getEdgeFromCoordinates(x, y);
     
     if (edgeInfo) {
-      if (pointer.rightButtonDown()) {
-        // Right click - toggle blocked edge
-        this.toggleBlockedEdge(edgeInfo.id);
-      } else {
-        // Left click - toggle drawn line
-        this.toggleDrawnLine(edgeInfo.id, edgeInfo);
-      }
+      console.log(`Hit edge: ${edgeInfo.id}`);
       
-      // Update game state
-      this.updateGameState();
+      // Set up long press timer for mobile blocking
+      this.longPressTimer = this.time.delayedCall(600, () => {
+        this.isLongPress = true;
+        console.log(`Long press detected on edge: ${edgeInfo.id}`);
+        this.toggleBlockedEdge(edgeInfo.id);
+        this.updateGameState();
+        
+        // Add haptic feedback if available
+        if ('vibrate' in navigator) {
+          navigator.vibrate(50);
+        }
+      });
+      
+      // Store edge info for potential use in pointer up
+      (this as any).pendingEdge = edgeInfo;
+      
+    } else {
+      console.log(`No edge found at (${x}, ${y})`);
     }
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer) {
-    // Handle any pointer up logic if needed
+    const duration = this.time.now - this.pointerDownTime;
+    const pendingEdge = (this as any).pendingEdge;
+    
+    // Cancel long press timer if still active
+    if (this.longPressTimer) {
+      this.longPressTimer.destroy();
+      this.longPressTimer = null;
+    }
+    
+    console.log(`Pointer up after ${duration}ms, isLongPress: ${this.isLongPress}`);
+    
+    // Only handle short taps if it wasn't a long press
+    if (!this.isLongPress && pendingEdge && duration < 600) {
+      // Check for right click (desktop) or handle as normal tap
+      if (pointer.rightButtonDown()) {
+        // Right click - toggle blocked edge
+        this.toggleBlockedEdge(pendingEdge.id);
+      } else {
+        // Normal tap - toggle drawn line
+        this.toggleDrawnLine(pendingEdge.id, pendingEdge);
+      }
+      
+      this.updateGameState();
+    }
+    
+    // Clean up
+    (this as any).pendingEdge = null;
+    this.isLongPress = false;
+  }
+
+  private handlePointerMove(pointer: Phaser.Input.Pointer) {
+    // Optional: Add visual feedback for pointer movement if needed
+    // This can be useful for debugging touch tracking
+    if (process.env.NODE_ENV === 'development' && pointer.isDown) {
+      console.log(`Pointer moving at: (${pointer.x}, ${pointer.y})`);
+    }
   }
 
   private getEdgeFromCoordinates(x: number, y: number): { id: string, x1: number, y1: number, x2: number, y2: number, isHorizontal: boolean } | null {
-    const tolerance = 25; // Increased click tolerance for better mobile experience
+    // Dynamic tolerance based on cell size for better mobile experience
+    const baseTolerance = Math.max(15, this.cellSize * 0.3);
+    const horizontalTolerance = baseTolerance;
+    const verticalTolerance = baseTolerance;
     
-    // Check horizontal edges
+    console.log(`Looking for edge at (${x}, ${y}) with tolerance ${baseTolerance}`);
+    
+    let bestMatch = null;
+    let minDistance = Infinity;
+    
+    // Check horizontal edges with improved detection
     for (let row = 0; row < this.gridSize; row++) {
       for (let col = 0; col < this.gridSize - 1; col++) {
         const x1 = this.offsetX + col * this.cellSize;
@@ -181,19 +277,29 @@ export class SlitherlinkGame extends Phaser.Scene {
         const x2 = this.offsetX + (col + 1) * this.cellSize;
         const y2 = y1;
         
-        // For horizontal lines, check if click is within the line segment bounds
-        if (x >= x1 - tolerance && x <= x2 + tolerance && 
-            Math.abs(y - y1) <= tolerance) {
-          return {
+        // Check if click is within horizontal line bounds
+        const withinX = x >= x1 - horizontalTolerance && x <= x2 + horizontalTolerance;
+        const withinY = Math.abs(y - y1) <= horizontalTolerance;
+        
+        if (withinX && withinY) {
+          // Calculate distance to line for prioritization
+          const distance = Math.abs(y - y1);
+          const edgeInfo = {
             id: `h-${row}-${col}`,
             x1, y1, x2, y2,
             isHorizontal: true
           };
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            bestMatch = edgeInfo;
+            console.log(`Found horizontal edge candidate: ${edgeInfo.id} at distance ${distance}`);
+          }
         }
       }
     }
     
-    // Check vertical edges  
+    // Check vertical edges with improved detection
     for (let row = 0; row < this.gridSize - 1; row++) {
       for (let col = 0; col < this.gridSize; col++) {
         const x1 = this.offsetX + col * this.cellSize;
@@ -201,19 +307,33 @@ export class SlitherlinkGame extends Phaser.Scene {
         const x2 = x1;
         const y2 = this.offsetY + (row + 1) * this.cellSize;
         
-        // For vertical lines, check if click is within the line segment bounds
-        if (y >= y1 - tolerance && y <= y2 + tolerance && 
-            Math.abs(x - x1) <= tolerance) {
-          return {
+        // Check if click is within vertical line bounds
+        const withinY = y >= y1 - verticalTolerance && y <= y2 + verticalTolerance;
+        const withinX = Math.abs(x - x1) <= verticalTolerance;
+        
+        if (withinX && withinY) {
+          // Calculate distance to line for prioritization
+          const distance = Math.abs(x - x1);
+          const edgeInfo = {
             id: `v-${row}-${col}`,
             x1, y1, x2, y2,
             isHorizontal: false
           };
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            bestMatch = edgeInfo;
+            console.log(`Found vertical edge candidate: ${edgeInfo.id} at distance ${distance}`);
+          }
         }
       }
     }
     
-    return null;
+    if (bestMatch) {
+      console.log(`Selected best match: ${bestMatch.id} at distance ${minDistance}`);
+    }
+    
+    return bestMatch;
   }
 
   private toggleDrawnLine(edgeId: string, edgeInfo: any) {

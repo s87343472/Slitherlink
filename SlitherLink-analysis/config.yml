@@ -1,9 +1,9 @@
 server:
   type: simple
-  applicationConnectors:
-    - type: http
-      port: ${ALGORITHM_PORT:-8080}
-      bindHost: 0.0.0.0
+  connector:
+    type: http
+    port: 8080
+    bindHost: 0.0.0.0
 
 logging:
   level: ${LOG_LEVEL:-INFO}
@@ -11,8 +11,3 @@ logging:
     com: ${LOG_LEVEL:-DEBUG}
   appenders:
     - type: console
-    - type: file
-      currentLogFilename: ${LOG_DIR:-./logs}/algorithm.log
-      archivedLogFilenamePattern: ${LOG_DIR:-./logs}/algorithm-%d{yyyy-MM-dd}.log.gz
-      maxFileSize: 10MB
-      archivedFileCount: 7

@@ -56,44 +56,49 @@ export const PuzzleSelector: React.FC<PuzzleSelectorProps> = ({ className = '' }
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
-      <h2 className="text-xl font-semibold mb-4">Select Puzzle</h2>
+    <div className={`bg-white rounded-lg shadow-md border p-4 ${className}`}>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <Settings size={16} className="text-white" />
+        </div>
+        <h2 className="text-lg font-bold text-gray-800">Select Puzzle</h2>
+      </div>
 
-      {/* Daily Challenge */}
-      <div className="mb-6">
+      {/* Daily Challenge - More compact */}
+      <div className="mb-4">
         <button
           onClick={handleDailyChallenge}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
-          <Calendar size={20} />
-          <span className="font-medium">Daily Challenge</span>
+          <Calendar size={16} />
+          <span className="font-semibold text-sm">Daily Challenge</span>
         </button>
-        <p className="text-sm text-gray-600 mt-2 text-center">
-          New puzzle every day with varying difficulty
+        <p className="text-xs text-gray-500 mt-1 text-center">
+          New puzzle every day
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-gray-800">
-          <Settings size={16} />
-          <span className="text-sm font-bold">Custom Puzzle</span>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+          <Shuffle size={14} className="text-purple-600" />
+          <span className="text-sm font-bold text-gray-800">Custom Puzzle</span>
         </div>
 
-        {/* Grid Size Selection */}
+        {/* Grid Size Selection - Improved design */}
         <div>
-          <label className="block text-sm font-bold text-gray-900 mb-2">
+          <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
             Grid Size
           </label>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-1.5">
             {gridSizeOptions.map((size) => (
               <button
                 key={size}
                 onClick={() => setSelectedGridSize(size)}
-                className={`p-2 text-sm rounded-lg border transition-colors ${
+                className={`p-2 text-xs font-bold rounded-md border-2 transition-all duration-200 transform hover:scale-105 ${
                   selectedGridSize === size
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-md'
+                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
                 }`}
               >
                 {size}×{size}
@@ -102,20 +107,20 @@ export const PuzzleSelector: React.FC<PuzzleSelectorProps> = ({ className = '' }
           </div>
         </div>
 
-        {/* Difficulty Selection */}
+        {/* Difficulty Selection - Improved design */}
         <div>
-          <label className="block text-sm font-bold text-gray-900 mb-2">
-            Difficulty
+          <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
+            Difficulty Level
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1.5">
             {difficultyOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setSelectedDifficulty(option.value as any)}
-                className={`p-3 text-sm rounded-lg border transition-colors ${
+                className={`w-full p-2.5 text-xs font-semibold rounded-md border-2 transition-all duration-200 transform hover:scale-102 ${
                   selectedDifficulty === option.value
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : `bg-white border-gray-300 hover:border-blue-300 ${option.color}`
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-md'
+                    : `bg-white border-gray-200 hover:border-blue-300 text-gray-700 hover:bg-blue-50 ${option.color.replace('bg-', 'hover:bg-').replace('-100', '-50')}`
                 }`}
               >
                 {option.label}
@@ -124,35 +129,52 @@ export const PuzzleSelector: React.FC<PuzzleSelectorProps> = ({ className = '' }
           </div>
         </div>
 
-        {/* Generate Button */}
+        {/* Generate Button - Improved styling */}
         <button
           onClick={handleGeneratePuzzle}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transform hover:scale-105"
         >
           {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-              <span>Generating...</span>
+              <span className="text-sm font-semibold">Generating...</span>
             </>
           ) : (
             <>
               <Play size={16} />
-              <span>Generate Puzzle</span>
+              <span className="text-sm font-semibold">Generate Puzzle</span>
             </>
           )}
         </button>
 
       </div>
 
-      {/* Puzzle Info */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">How to Play:</h3>
-        <ul className="text-sm text-gray-600 space-y-1">
-          <li>• Click between dots to draw lines</li>
-          <li>• Right-click to block an edge with ×</li>
-          <li>• Numbers show how many lines should surround that cell</li>
-          <li>• Form a single continuous loop</li>
+      {/* How to Play - Compact */}
+      <div className="mt-4 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-xs text-blue-600">?</span>
+          </div>
+          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Quick Guide</h3>
+        </div>
+        <ul className="text-xs text-gray-600 space-y-1">
+          <li className="flex items-start gap-1">
+            <span className="text-blue-500 font-bold">•</span>
+            <span>Click between dots to draw/remove lines</span>
+          </li>
+          <li className="flex items-start gap-1">
+            <span className="text-green-500 font-bold">•</span>
+            <span>Right-click to block edges with ×</span>
+          </li>
+          <li className="flex items-start gap-1">
+            <span className="text-purple-500 font-bold">•</span>
+            <span>Numbers = lines needed around cell</span>
+          </li>
+          <li className="flex items-start gap-1">
+            <span className="text-orange-500 font-bold">•</span>
+            <span>Create one continuous loop</span>
+          </li>
         </ul>
       </div>
     </div>

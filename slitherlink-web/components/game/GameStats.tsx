@@ -67,104 +67,111 @@ export const GameStats: React.FC<GameStatsProps> = ({ className = '' }) => {
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border p-4 ${className}`}>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Time */}
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-full bg-blue-100">
-            <Clock size={16} className="text-blue-600" />
+    <div className={`bg-white rounded-lg shadow-md border-2 border-gray-100 p-3 ${className}`}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Time - Improved design */}
+        <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-2">
+          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shadow-sm">
+            <Clock size={14} className="text-white" />
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Time</p>
-            <p className="font-mono font-semibold text-lg">{displayTime}</p>
-          </div>
-        </div>
-
-        {/* Score */}
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-full bg-purple-100">
-            <Trophy size={16} className="text-purple-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Score</p>
-            <p className="font-semibold text-lg">{score.toLocaleString()}</p>
+          <div className="min-w-0">
+            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide">Time</p>
+            <p className="font-mono font-bold text-base text-blue-800">{displayTime}</p>
           </div>
         </div>
 
-        {/* Errors */}
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-full bg-red-100">
-            <AlertTriangle size={16} className="text-red-600" />
+        {/* Score - Improved design */}
+        <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-2">
+          <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center shadow-sm">
+            <Trophy size={14} className="text-white" />
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Errors</p>
-            <p className="font-semibold text-lg">{errors}</p>
+          <div className="min-w-0">
+            <p className="text-xs text-purple-600 font-semibold uppercase tracking-wide">Score</p>
+            <p className="font-bold text-base text-purple-800">{score.toLocaleString()}</p>
           </div>
         </div>
 
-        {/* Difficulty */}
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-full bg-gray-100">
-            <Target size={16} className="text-gray-600" />
+        {/* Errors - Improved design */}
+        <div className="flex items-center gap-2 bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-2">
+          <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center shadow-sm">
+            <AlertTriangle size={14} className="text-white" />
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Difficulty</p>
-            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getDifficultyColor(currentPuzzle.difficulty)}`}>
+          <div className="min-w-0">
+            <p className="text-xs text-red-600 font-semibold uppercase tracking-wide">Errors</p>
+            <p className="font-bold text-base text-red-800">{errors}</p>
+          </div>
+        </div>
+
+        {/* Difficulty - Improved design */}
+        <div className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-2">
+          <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center shadow-sm">
+            <Target size={14} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Level</p>
+            <span className={`inline-block px-2 py-1 rounded-md text-xs font-bold capitalize ${getDifficultyColor(currentPuzzle.difficulty)} shadow-sm`}>
               {currentPuzzle.difficulty}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Game Status and Grid Size */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      {/* Game Status and Grid Size - Compact design */}
+      <div className="mt-3 pt-3 border-t border-gray-100">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-sm text-gray-600">Status: </span>
-              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(gameStatus)}`}>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className={`w-2 h-2 rounded-full ${gameStatus === 'playing' ? 'bg-green-500 animate-pulse' : gameStatus === 'completed' ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+              <span className="text-xs font-semibold text-gray-700">Status:</span>
+              <span className={`px-2 py-0.5 rounded-md text-xs font-bold capitalize ${getStatusColor(gameStatus)} shadow-sm`}>
                 {gameStatus}
               </span>
             </div>
-            <div>
-              <span className="text-sm text-gray-600">Grid: </span>
-              <span className="font-medium">{currentPuzzle.gridSize}×{currentPuzzle.gridSize}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-gray-700">Grid:</span>
+              <span className="px-2 py-0.5 bg-gray-100 rounded-md text-xs font-bold text-gray-800">
+                {currentPuzzle.gridSize}×{currentPuzzle.gridSize}
+              </span>
             </div>
           </div>
 
-          {/* Progress indicator (optional) */}
+          {/* Progress indicator - Enhanced */}
           {gameStatus === 'playing' && (
             <div className="flex items-center gap-2">
-              <div className="w-16 bg-gray-200 rounded-full h-2">
+              <div className="w-20 bg-gray-200 rounded-full h-2.5 shadow-inner">
                 <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: '30%' }} // This would be calculated based on actual progress
                 />
               </div>
-              <span className="text-xs text-gray-500">30%</span>
+              <span className="text-xs font-bold text-gray-600 min-w-[2rem]">30%</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Solution viewed warning */}
+      {/* Solution viewed warning - Enhanced design */}
       {hasViewedSolution && gameStatus === 'playing' && (
-        <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="mt-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
-            <Eye size={16} className="text-orange-600" />
-            <p className="text-sm font-medium text-orange-800">
+            <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+              <Eye size={12} className="text-white" />
+            </div>
+            <p className="text-xs font-bold text-orange-800">
               Solution viewed - submission disabled for fair play
             </p>
           </div>
         </div>
       )}
 
-      {/* Completion message */}
+      {/* Completion message - Enhanced design */}
       {gameStatus === 'completed' && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
-            <Trophy size={16} className="text-green-600" />
-            <p className="text-sm font-medium text-green-800">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <Trophy size={12} className="text-white" />
+            </div>
+            <p className="text-xs font-bold text-green-800">
               Puzzle completed! Time: {displayTime}
               {hasViewedSolution && ' (Practice mode - solution was viewed)'}
             </p>

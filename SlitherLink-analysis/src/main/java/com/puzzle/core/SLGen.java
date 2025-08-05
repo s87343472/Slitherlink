@@ -275,7 +275,7 @@ public class SLGen {
 	 * @param oldCount
 	 * @return count matrix
 	 */
-	private int[][] clueReduction(int[][] oldCount) {
+	protected int[][] clueReduction(int[][] oldCount) {
 		int clueCount = 0;
 		int tryCount = 0;
 		for (int i = 0; i < n - 1; i++) {
@@ -318,13 +318,228 @@ public class SLGen {
 	}
 
 	/**
-	 * Reduce clue count according to difficulty
+	 * Reduce clue count according to difficulty with proper density control
 	 * 
 	 * @param diff
 	 * @param oldCount
 	 * @return count matrix
 	 */
-	private int[][] reducePuzzle(String diff, int[][] oldCount) {
+	protected int[][] reducePuzzle(String diff, int[][] oldCount) {
+		// Apply improved density control
+		return reducePuzzleWithDensityControl(diff, oldCount);
+	}
+	
+	/**
+	 * Improved puzzle reduction with proper density control
+	 * 
+	 * @param diff difficulty level
+	 * @param oldCount complete puzzle with all clues
+	 * @return puzzle with appropriate clue density
+	 */
+	private int[][] reducePuzzleWithDensityControl(String diff, int[][] oldCount) {
+		int totalCells = (n - 1) * (n - 1);
+		
+		// Define target density ranges based on difficulty and grid size
+		DensityRange targetRange = getTargetDensityRange(n, diff);
+		int minClues = (int) Math.ceil(totalCells * targetRange.min);
+		int maxClues = (int) Math.floor(totalCells * targetRange.max);
+		
+		System.out.println(String.format("Grid: %dx%d, Difficulty: %s, Target: %d-%d clues (%.1f%%-%.1f%%)", 
+			n, n, diff, minClues, maxClues, targetRange.min*100, targetRange.max*100));
+		
+		// Count current clues
+		int currentClues = countNonEmptyClues(oldCount);
+		System.out.println("Starting with " + currentClues + " clues");
+		
+		if (currentClues <= maxClues) {
+			System.out.println("Already within target range");
+			return currentClues >= minClues ? oldCount : fallbackToOriginal(diff, oldCount);
+		}
+		
+		// Strategic reduction to reach target density
+		return strategicClueReduction(oldCount, minClues, maxClues, diff);
+	}
+	
+	/**
+	 * Define target density ranges based on grid size and difficulty
+	 */
+	private DensityRange getTargetDensityRange(int gridSize, String difficulty) {
+		if (gridSize <= 7) {
+			// Small grids need higher density for solvability
+			switch (difficulty.toLowerCase()) {
+				case "easy": return new DensityRange(0.45, 0.65);
+				case "medium": return new DensityRange(0.35, 0.50);
+				case "difficult": return new DensityRange(0.25, 0.40);
+				default: return new DensityRange(0.35, 0.50);
+			}
+		} else if (gridSize <= 10) {
+			// Standard 10x10 grid density
+			switch (difficulty.toLowerCase()) {
+				case "easy": return new DensityRange(0.35, 0.50);
+				case "medium": return new DensityRange(0.25, 0.35);
+				case "difficult": return new DensityRange(0.15, 0.25);
+				default: return new DensityRange(0.25, 0.35);
+			}
+		} else {
+			// Large grids can work with lower density
+			switch (difficulty.toLowerCase()) {
+				case "easy": return new DensityRange(0.30, 0.45);
+				case "medium": return new DensityRange(0.20, 0.30);
+				case "difficult": return new DensityRange(0.15, 0.25);
+				default: return new DensityRange(0.20, 0.30);
+			}
+		}
+	}
+	
+	/**
+	 * Strategic clue reduction maintaining puzzle solvability
+	 */
+	private int[][] strategicClueReduction(int[][] puzzle, int minClues, int maxClues, String difficulty) {
+		int[][] working = new int[n-1][n-1];
+		// Copy original puzzle
+		for (int i = 0; i < n-1; i++) {
+			for (int j = 0; j < n-1; j++) {
+				working[i][j] = puzzle[i][j];
+			}
+		}
+		
+		// Create ordered list of clues to potentially remove
+		ArrayList<ClueCandidate> candidates = new ArrayList<>();
+		
+		for (int i = 0; i < n-1; i++) {
+			for (int j = 0; j < n-1; j++) {
+				if (working[i][j] != -1) {
+					int priority = calculateRemovalPriority(i, j, working[i][j], difficulty);
+					candidates.add(new ClueCandidate(i, j, working[i][j], priority));
+				}
+			}
+		}
+		
+		// Sort by removal priority (higher = remove first)
+		candidates.sort((a, b) -> Integer.compare(b.priority, a.priority));
+		
+		// Remove clues until we reach target range
+		int currentClues = countNonEmptyClues(working);
+		
+		for (ClueCandidate candidate : candidates) {
+			if (currentClues <= maxClues) break;
+			
+			// Try removing this clue
+			int originalValue = working[candidate.row][candidate.col];
+			working[candidate.row][candidate.col] = -1;
+			
+			// Verify puzzle still solvable
+			if (validatePuzzleSolvability(working)) {
+				currentClues--;
+				System.out.println("Removed clue at (" + candidate.row + "," + candidate.col + 
+					"), remaining: " + currentClues);
+			} else {
+				// Restore the clue
+				working[candidate.row][candidate.col] = originalValue;
+			}
+		}
+		
+		int finalClues = countNonEmptyClues(working);
+		System.out.println(String.format("Final puzzle: %d clues (%.1f%% density)", 
+			finalClues, (finalClues * 100.0) / ((n-1) * (n-1))));
+		
+		return working;
+	}
+	
+	/**
+	 * Calculate removal priority for a clue position
+	 */
+	private int calculateRemovalPriority(int row, int col, int clueValue, String difficulty) {
+		int priority = 0;
+		
+		// Distance from center - center clues are more important
+		int centerRow = (n-1) / 2;
+		int centerCol = (n-1) / 2;
+		int distanceFromCenter = Math.abs(row - centerRow) + Math.abs(col - centerCol);
+		priority += distanceFromCenter;
+		
+		// Clue value importance
+		switch (clueValue) {
+			case 0: priority += 3; break; // 0s are often redundant
+			case 3: priority += 3; break; // 3s are often redundant
+			case 1: priority += 1; break; // 1s are useful
+			case 2: priority -= 1; break; // 2s are often crucial
+		}
+		
+		// Corner and edge handling based on difficulty
+		boolean isCorner = (row == 0 || row == n-2) && (col == 0 || col == n-2);
+		boolean isEdge = (row == 0 || row == n-2 || col == 0 || col == n-2);
+		
+		if ("difficult".equals(difficulty)) {
+			if (isCorner) priority += 5; // Remove corners first in hard puzzles
+		} else {
+			if (isCorner) priority -= 3; // Keep corners in easier puzzles
+		}
+		
+		return priority;
+	}
+	
+	/**
+	 * Validate that puzzle still has exactly one solution
+	 */
+	private boolean validatePuzzleSolvability(int[][] puzzle) {
+		try {
+			SLSolve solver = new SLSolve(n, puzzle, false);
+			int[] result = solver.genSolutions(3);
+			return result[0] == 2; // Should have exactly 2 solutions (forward and reverse)
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Count non-empty clues
+	 */
+	private int countNonEmptyClues(int[][] puzzle) {
+		int count = 0;
+		for (int i = 0; i < puzzle.length; i++) {
+			for (int j = 0; j < puzzle[i].length; j++) {
+				if (puzzle[i][j] != -1) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+	
+	/**
+	 * Fallback to original algorithm if improved version fails
+	 */
+	private int[][] fallbackToOriginal(String diff, int[][] oldCount) {
+		System.out.println("Falling back to original algorithm for " + diff + " difficulty");
+		return clueReduction(oldCount);
+	}
+
+	// Helper classes for improved density control
+	private static class DensityRange {
+		final double min, max;
+		
+		DensityRange(double min, double max) {
+			this.min = min;
+			this.max = max;
+		}
+	}
+	
+	private static class ClueCandidate {
+		final int row, col, value, priority;
+		
+		ClueCandidate(int row, int col, int value, int priority) {
+			this.row = row;
+			this.col = col;
+			this.value = value;
+			this.priority = priority;
+		}
+	}
+	
+	/**
+	 * Original reducePuzzle implementation (preserved for fallback)
+	 */
+	private int[][] reducePuzzleOriginal(String diff, int[][] oldCount) {
 
 		if (diff.equals("easy")) {
 

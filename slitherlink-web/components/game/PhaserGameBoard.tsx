@@ -44,7 +44,7 @@ const PhaserGameInner: React.FC<PhaserGameBoardProps> = ({
           phaserGameRef.current.destroy(true);
         }
 
-        // Create Phaser game configuration
+        // Create Phaser game configuration with mobile optimizations
         const config: any = {
           type: Phaser.AUTO,
           width,
@@ -63,15 +63,30 @@ const PhaserGameInner: React.FC<PhaserGameBoardProps> = ({
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
             width,
-            height
+            height,
+            // Better mobile handling
+            zoom: 1,
+            resizeInterval: 500
           },
           input: {
             mouse: {
-              target: gameRef.current
+              target: gameRef.current,
+              capture: true
             },
             touch: {
-              target: gameRef.current
-            }
+              target: gameRef.current,
+              capture: true
+            },
+            // Add mobile-specific input settings
+            activePointers: 1,
+            smoothFactor: 0.15,
+            inputQueueSize: 10
+          },
+          render: {
+            // Better mobile performance
+            antialias: true,
+            pixelArt: false,
+            roundPixels: false
           }
         };
 
@@ -226,7 +241,7 @@ const PhaserGameInner: React.FC<PhaserGameBoardProps> = ({
   }, [gameSceneRef.current, isLoaded]);
 
   return (
-    <div className={className}>
+    <div className={`game-board-container ${className}`}>
       <div
         ref={gameRef}
         className="border border-gray-300 rounded-lg overflow-hidden"
